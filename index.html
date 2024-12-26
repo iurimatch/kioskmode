@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiosk Camera</title>
+    <style>
+        video {
+            width: 100%;
+            max-width: 500px;
+            display: block;
+        }
+        canvas {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Camera Auto Activation</h1>
+    <video id="video-feed" autoplay playsinline></video>
+    <canvas id="photo-canvas"></canvas>
+
+    <script>
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "user" }, // Use "environment" for rear camera
+                    audio: false
+                });
+
+                const videoFeed = document.getElementById('video-feed');
+                videoFeed.srcObject = stream;
+
+                // Automatically capture photo after 3 seconds
+                setTimeout(() => {
+                    takePhoto(stream);
+                }, 3000);
+            } catch (error) {
+                console.error("Error accessing the camera:", error);
+            }
+        }
+
+        function takePhoto(stream) {
+            const videoFeed = document.getElementById('video-feed');
+            const canvas = document.getElementById('photo-canvas');
+            const context = canvas.getContext('2d');
+
+            canvas.width = videoFeed.videoWidth;
+            canvas.height = videoFeed.videoHeight;
+
+            context.drawImage(videoFeed, 0, 0, canvas.width, canvas.height);
+
+            // Save photo as data URL
+            const photoURL = canvas.toDataURL("image/png");
+
+            // Automatically download photo
+            const link = document.createElement('a');
+            link.href = photoURL;
+            link.download = 'photo.png';
+            link.click();
+
+            // Stop the video stream
+            stream.getTracks().forEach(track => track.stop());
+        }
+
+        // Automatically start camera on page load
+        window.onload = startCamera;
+    </script>
+</body>
+</html>
